@@ -1,18 +1,24 @@
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 public class MathGame {
 
     private Player player1;
     private Player player2;
+    private Player player3;
     private Player currentPlayer;
     private Player winner;
     private boolean gameOver;
     private Scanner scanner;
+    private int loseStreak;
+    private Map<String, Integer> scoreMap = new HashMap<>();
 
     // create MathGame object
-    public MathGame(Player player1, Player player2, Scanner scanner) {
+    public MathGame(Player player1, Player player2,Player player3, Scanner scanner) {
         this.player1 = player1;
         this.player2 = player2;
+        this.player3 = player3;
         this.scanner = scanner;
         currentPlayer = null; // will get assigned at start of game
         winner = null; // will get assigned when a Player wins
@@ -34,13 +40,18 @@ public class MathGame {
             System.out.println("Current player: " + currentPlayer.getName());
             boolean correct = askQuestion();  // this helper method (shown below) asks a question and returns T or F
             if (correct) {
+                loseStreak = 0;
                 System.out.println("Correct!");
                 currentPlayer.incrementScore();  // this increments the currentPlayer's score
                 swapPlayers();  // this helper method (shown below) sets currentPlayer to the other Player
             } else {
+                loseStreak++;
                 System.out.println("INCORRECT!");
-                gameOver = true;
-                determineWinner();
+                if (loseStreak >= 2) {
+                    gameOver = true;
+                    determineWinner();
+                }
+                swapPlayers();
             }
         }
     }
@@ -51,6 +62,7 @@ public class MathGame {
         System.out.println("Current Scores:");
         System.out.println(player1.getName() + ": " + player1.getScore());
         System.out.println(player2.getName() + ": " + player2.getScore());
+        System.out.printf("%s: %d%n", player3.getName(), player3.getScore());
         System.out.println("--------------------------------------");
     }
 
@@ -58,6 +70,8 @@ public class MathGame {
     public void resetGame() {
         player1.reset(); // this method resets the player
         player2.reset();
+        player3.reset();
+        loseStreak = 0;
         gameOver = false;
         currentPlayer = null;
         winner = null;
@@ -67,11 +81,17 @@ public class MathGame {
 
     // randomly chooses one of the Player objects to be the currentPlayer
     private void chooseStartingPlayer() {
-        int randNum = (int) (Math.random() * 2) + 1;
-        if (randNum == 1) {
-            currentPlayer = player1;
-        } else {
-            currentPlayer = player2;
+        int randNum = (int) (Math.random() * 3) + 1;
+        switch (randNum) {
+            case 1:
+                currentPlayer = player1;
+                break;
+            case 2:
+                currentPlayer = player2;
+                break;
+            default:
+                currentPlayer = player3;
+                break;
         }
     }
 
@@ -103,17 +123,15 @@ public class MathGame {
         int playerAnswer = scanner.nextInt(); // get player's answer using Scanner
         scanner.nextLine(); // clear text buffer after numeric scanner input
 
-        if (playerAnswer == correctAnswer) {
-            return true;
-        } else {
-            return false;
-        }
+        return playerAnswer == correctAnswer;
     }
 
     // swaps the currentPlayer to the other player
     private void swapPlayers() {
         if (currentPlayer == player1) {
             currentPlayer = player2;
+        } else if (currentPlayer == player2) {
+            currentPlayer = player3;
         } else {
             currentPlayer = player1;
         }
@@ -121,10 +139,29 @@ public class MathGame {
 
     // sets the winner when the game ends based on the player that missed the question
     private void determineWinner() {
-        if (currentPlayer == player1) {
-            winner = player2;
-        } else {
+        if (player1.getScore() < player3.getScore() && player2.getScore() < player3.getScore()) {
+            winner = player3;
+            updateStreak(player3.getName());
+        } else if (player2.getScore() < player1.getScore() && player3.getScore() < player1.getScore()) {
             winner = player1;
+            updateStreak(player1.getName());
+        } else {
+            winner = player2;
+            updateStreak(player2.getName());
         }
+
+    }
+
+    private void updateStreak(String winner) {
+        scoreMap.put(winner, scoreMap.getOrDefault(winner, 0) + 1);
+        for (String player : scoreMap.keySet()) {
+            if (!player.equals(winner)) {
+                scoreMap.put(player, 0);
+            }
+        }
+    }
+
+    public int getWinStreak() {
+        return scoreMap.getOrDefault(winner.getName(), 0);
     }
 }

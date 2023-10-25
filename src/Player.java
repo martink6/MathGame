@@ -2,6 +2,7 @@ public class Player {
 
     private String name;
     private int score;
+    private int highScore;
 
     public Player(String name) {
         this.name = name;
@@ -16,8 +17,16 @@ public class Player {
         return name;
     }
 
+    public int getHighScore() {
+        return highScore;
+    }
+
     public void incrementScore() {
         score++;
+
+        if (score > highScore) {
+            highScore = score;
+        }
     }
 
     public void reset() {
